@@ -33,5 +33,6 @@ int splitIntoLines(InputFile *inputFile);
 
 int readFileToLinesStruct(FILE* openedFile, InputFile* inputFile);
 
-int textToCode(InputFile *inputFile, int *code, Header* header);
+int textToCode(InputFile *inputFile, char *code, Header* header);
 
+char checkArg(char* arg, char* Register, int *num);

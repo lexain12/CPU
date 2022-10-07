@@ -5,7 +5,7 @@
 #include <cassert>
 #include <ctype.h>
 #include <string.h>
-#include "../CPU.h"
+#include "../common.h"
 #include "assembler.h"
 
 
@@ -114,49 +114,96 @@ int readFileToLinesStruct(FILE* openedFile, InputFile* inputFile)
     return err;
 }
 
-int textToCode(InputFile *inputFile, int *code, Header* header)
+char checkArg(char* arg, char* Register, int *num)
+{
+    char cmd = 0;
+    char* firstChr = strchr(arg, 'r');
+    char* lastChr  = strchr(arg, 'x');
+
+    if ((lastChr - firstChr) == 2)
+    {
+        cmd |= ARG_REG;
+        *Register = *(firstChr + 1) - 'a' + 1;
+        if (sscanf(arg, "%*[^+]+%d", num) > 0) 
+        {}
+        else if (sscanf(arg, "%d", num) > 0)
+        {}
+        else
+            return cmd;
+        cmd |= ARG_IMMED;
+        
+        return cmd;
+    }
+    else if (sscanf(arg, "%d", num))
+    {
+        cmd |= ARG_IMMED;
+        return cmd;
+    }
+    //else
+}
+
+int textToCode(InputFile *inputFile, char *code, Header* header)
 {
 
     Line *_arrayOfLines = inputFile->arrayOfLines;
     char curCmd[MAX_STR_SIZE] = "";
-    size_t line  = 0;
-    int    num   = 0;
-    size_t index = 0;
+    size_t line     = 0;
+    int    num      = 0;
+    size_t ip       = 0;
+    size_t numRead  = 0;
+    char   Register = 0;
 
     while (line < inputFile->numberOfLines)
     {
-        sscanf(_arrayOfLines[line].charArray, "%s", curCmd);
+        sscanf(_arrayOfLines[line].charArray, "%s%n", curCmd, &numRead);
         if (strcasecmp(curCmd, "PUSH") == 0)
         {
-            sscanf(_arrayOfLines[line].charArray, "%*s %d", &num);
-            code[index++] = PUSH_CMD;
-            code[index++] = num;
+            char flags = checkArg(_arrayOfLines[line].charArray + numRead, &Register, &num);
+
+            code[ip++] = ((char) PUSH_CMD) | flags;
+            if (flags & ARG_REG) code[ip++] = Register;
+            if (flags & ARG_IMMED)
+            {
+                *(int*)(code + ip) = num;
+                ip += sizeof(int);
+            }
+        }
+        else if (strcasecmp(curCmd, "POP") == 0)
+        {
+            char flags = checkArg(_arrayOfLines[line].charArray + numRead, &Register, &num);
+
+            code[ip++] = ((char) POP_CMD) | flags;
+            if (flags & ARG_REG) code[ip++] = Register;
         }
         else if (strcasecmp(curCmd, "ADD") == 0)
         {
-            code[index++] = ADD_CMD;
+            code[ip++] = (char) ADD_CMD;
         }
         else if (strcasecmp(curCmd, "SUB") == 0)
         {
-            code[index++] = SUB_CMD;
+            code[ip++] = (char) SUB_CMD;
         }
         else if (strcasecmp(curCmd, "MUL") == 0)
         {
-            code[index++] = MUL_CMD;
+            code[ip++] = (char) MUL_CMD;
         }
         else if (strcasecmp(curCmd, "DIV") == 0)
         {
-            code[index++] = DIV_CMD;
+            code[ip++] = (char) DIV_CMD;
         }
         else if (strcasecmp(curCmd, "OUT") == 0)
         {
-            code[index++] = OUT_CMD;
+            code[ip++] = (char) OUT_CMD;
         }
         else if (strcasecmp(curCmd, "HLT") == 0)
         {
-            code[index++] = HLT_CMD;
-            header->codeSize = index;
+            code[ip++] = (char) HLT_CMD;
+            header->codeSize = ip;
             break;
+        }
+        else if (strcasecmp(curCmd, "IN") == 0)
+        {
+            code[ip++] = (char) IN_CMD;
         }
         else 
         {
@@ -166,7 +213,7 @@ int textToCode(InputFile *inputFile, int *code, Header* header)
         
    
     }
-    if (code[--index] != HLT_CMD)
+    if (code[--ip] != HLT_CMD)
     {
         printf("No hlt\n");
         return noHltCmd;
