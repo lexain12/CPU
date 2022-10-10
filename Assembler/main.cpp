@@ -29,17 +29,17 @@ int main()
     code = (char*) calloc(inputFile.numberOfLines * 2, sizeof(int));
 
     textToCode(&inputFile, code, &header); // make error
+    textToCode(&inputFile, code, &header); // make error
 
     FILE* fileToWrite = fopen("Assembler/out.bin", "wb");
     assert(fileToWrite != nullptr);
 
     fwrite (&header, sizeof(Header), sizeof(char), fileToWrite);
-    fwrite (code, header.codeSize, sizeof(int), fileToWrite);
-    for (size_t index = 0; index < header.codeSize; index++)
+    fwrite (code, header.codeSize, sizeof(char), fileToWrite);
+    for (int index = 0; index < header.codeSize; index++)
     {
         printf("%02X ", code[index]);
     }
-    printf("\n");
     
 }
 

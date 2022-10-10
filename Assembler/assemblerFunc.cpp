@@ -8,6 +8,7 @@
 #include "../common.h"
 #include "assembler.h"
 
+static int Labels[12] = {};
 
 size_t fileSize (FILE* file)
 {
@@ -134,6 +135,11 @@ char checkArg(char* arg, char* Register, int *num)
         
         return cmd;
     }
+    else if (sscanf(arg, ":%d", num) > 0)
+    {
+        cmd |= ARG_IMMED;
+        return cmd;
+    }
     else if (sscanf(arg, "%d", num))
     {
         cmd |= ARG_IMMED;
@@ -142,68 +148,74 @@ char checkArg(char* arg, char* Register, int *num)
     //else
 }
 
+void setArg(char* arg, char* code, size_t* ip, int command)
+{
+    char flags    = 0;
+    int  num      = 0;
+    char Register = 0;
+
+    if (arg[0] == '[' && (arg[strlen(arg) - 1]) == ']')
+    {
+        arg += 1;
+        flags |= ARG_MEM;
+    }
+
+    flags |= checkArg(arg, &Register, &num);
+
+    code[(*ip)++] = ((char) command) | flags;
+    if (flags & ARG_REG) code[(*ip)++] = Register;
+    if (strchr(arg, ':'))
+    {
+        *(int*)(code + *ip) = Labels[num];
+        (*ip) += sizeof(int);
+        return;
+    }
+    if (flags & ARG_IMMED)
+    {
+        *(int*)(code + *ip) = num;
+        (*ip) += sizeof(int);
+    }
+}
+
 int textToCode(InputFile *inputFile, char *code, Header* header)
 {
 
     Line *_arrayOfLines = inputFile->arrayOfLines;
     char curCmd[MAX_STR_SIZE] = "";
-    size_t line     = 0;
+    char curArg[MAX_STR_SIZE] = "";
     int    num      = 0;
+    size_t line     = 0;
     size_t ip       = 0;
-    size_t numRead  = 0;
-    char   Register = 0;
 
     while (line < inputFile->numberOfLines)
     {
-        sscanf(_arrayOfLines[line].charArray, "%s%n", curCmd, &numRead);
-        if (strcasecmp(curCmd, "PUSH") == 0)
+        sscanf(_arrayOfLines[line].charArray, "%s", curCmd);
+        if  (strchr(curCmd, ':'))
         {
-            char flags = checkArg(_arrayOfLines[line].charArray + numRead, &Register, &num);
-
-            code[ip++] = ((char) PUSH_CMD) | flags;
-            if (flags & ARG_REG) code[ip++] = Register;
-            if (flags & ARG_IMMED)
-            {
-                *(int*)(code + ip) = num;
-                ip += sizeof(int);
-            }
+            int label = 0;
+            sscanf(curCmd, "%d", &label);
+            Labels[label] = ip;
         }
-        else if (strcasecmp(curCmd, "POP") == 0)
-        {
-            char flags = checkArg(_arrayOfLines[line].charArray + numRead, &Register, &num);
-
-            code[ip++] = ((char) POP_CMD) | flags;
-            if (flags & ARG_REG) code[ip++] = Register;
+#define DEF_CMD(name, num, arg, cod)                                      \ 
+        else if (strcasecmp(curCmd, #name) == 0)                            \
+        {                                                                   \
+            if (arg)                                                        \        
+            {                                                               \
+                sscanf (_arrayOfLines[line].charArray, "%*s %s", curArg);   \
+                setArg (curArg, code, &ip, num);                            \
+            }                                                               \        
+            else                                                            \
+            {                                                               \
+                code[ip++] = (char) name##_CMD;                             \
+            }                                                               \
         }
-        else if (strcasecmp(curCmd, "ADD") == 0)
-        {
-            code[ip++] = (char) ADD_CMD;
-        }
-        else if (strcasecmp(curCmd, "SUB") == 0)
-        {
-            code[ip++] = (char) SUB_CMD;
-        }
-        else if (strcasecmp(curCmd, "MUL") == 0)
-        {
-            code[ip++] = (char) MUL_CMD;
-        }
-        else if (strcasecmp(curCmd, "DIV") == 0)
-        {
-            code[ip++] = (char) DIV_CMD;
-        }
-        else if (strcasecmp(curCmd, "OUT") == 0)
-        {
-            code[ip++] = (char) OUT_CMD;
-        }
+#include "../cmd.h"
+#undef DEF_CMD
         else if (strcasecmp(curCmd, "HLT") == 0)
         {
             code[ip++] = (char) HLT_CMD;
             header->codeSize = ip;
             break;
-        }
-        else if (strcasecmp(curCmd, "IN") == 0)
-        {
-            code[ip++] = (char) IN_CMD;
         }
         else 
         {

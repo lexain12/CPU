@@ -23,6 +23,7 @@ struct InputFile
     char*  text          = nullptr;
 };
 
+
 size_t fileSize (FILE* file);
 
 int readFile(FILE* openedFile, char** dest);
@@ -36,3 +37,5 @@ int readFileToLinesStruct(FILE* openedFile, InputFile* inputFile);
 int textToCode(InputFile *inputFile, char *code, Header* header);
 
 char checkArg(char* arg, char* Register, int *num);
+
+void setArg(char* arg, char* code, size_t* ip, int command);

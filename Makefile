@@ -5,9 +5,9 @@ CPUFILES = main.cpp CPUfuctions.cpp
 CLANGSTZ = clang++ -std=c++17 -fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero
 ASMFILE  = Assembler/bin/
 
-all: CPU
+all: cpu asm 
 
-CPU: main.o CPUfunctions.o
+cpu: main.o CPUfunctions.o
 	$(CXX) bin/main.o bin/CPUfunctions.o -o CPU
 
 main.o: main.cpp
@@ -16,8 +16,11 @@ main.o: main.cpp
 CPUfunctions.o: CPUfunctions.cpp
 	$(CXX) $(CXXFLAGS) CPUfunctions.cpp -c -o bin/CPUfunctions.o
 
-ASM: asmmain.o assemblerFunc.o
-	$(CXX) $(ASMFILE)main.o $(ASMFILE)assemblerFunc.o -o Assembler/ASM
+cpusanitize: main.o CPUfunctions.o
+	$(CLANGSTZ) bin/main.o bin/CPUfunctions.o
+
+asm: asmmain.o assemblerFunc.o
+	$(CXX) $(ASMFILE)main.o $(ASMFILE)assemblerFunc.o -o ASM
 
 asmmain.o: Assembler/main.cpp
 	$(CXX) $(CXXFLAGS) Assembler/main.cpp -c -o $(ASMFILE)main.o
@@ -25,6 +28,6 @@ asmmain.o: Assembler/main.cpp
 assemblerFunc.o: Assembler/assemblerFunc.cpp
 	$(CXX) $(CXXFLAGS) Assembler/assemblerFunc.cpp -c -o $(ASMFILE)assemblerFunc.o
 
-ASMsanitize: asmmain.o assemblerFunc.o
+asmsanitize: asmmain.o assemblerFunc.o
 	$(CLANGSTZ) $(ASMFILE)main.o $(ASMFILE)assemblerFunc.o
 

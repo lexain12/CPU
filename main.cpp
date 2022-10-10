@@ -3,16 +3,22 @@
 
 int main() 
 {
-    int *code        = nullptr;
-    FILE *fileToRead = fopen("../Assembler/out.txt", "rb");
+    CPU cpu = {};
+    
+    FILE *fileToRead = fopen("Assembler/out.bin", "rb");
+    assert(fileToRead != nullptr);
 
     Header header = {};
     size_t numReaded = fread(&header, sizeof(char), sizeof(Header), fileToRead);
-    fprintf(stderr, "OK %lu\n", numReaded);
-    fprintf(stderr, "%lu\n", header.version);
-    fprintf(stderr, "%lu\n", header.codeSize);
-    fprintf(stderr, "%u\n", header.signature);
-    //read
+    assert(numReaded == sizeof(Header));
+
+    char* code = (char*) calloc(header.codeSize, sizeof(char));
+    assert(code != nullptr);
+    cpu.code = code;
+
+    numReaded = fread(cpu.code, sizeof(int), header.codeSize, fileToRead);
+
+    execute (&cpu, header);
 
     //execution
 
