@@ -72,8 +72,7 @@ int execute (CPU* cpu, Header header)
         {
 #define DEF_CMD(name, num, arg, ...)\
             case name##_CMD:        \
-                __VA_ARGS__         \
-                break;
+                __VA_ARGS__         
 #include "cmd.h"
 #undef DEF_CMD
             case  HLT_CMD: 
