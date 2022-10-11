@@ -16,7 +16,7 @@ int main()
     assert(code != nullptr);
     cpu.code = code;
 
-    numReaded = fread(cpu.code, sizeof(int), header.codeSize, fileToRead);
+    numReaded = fread(cpu.code, sizeof(char), header.codeSize, fileToRead);
 
     execute (&cpu, header);
 

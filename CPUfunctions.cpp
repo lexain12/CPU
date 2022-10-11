@@ -1,4 +1,4 @@
-typedef int Elem_t;
+typedef double Elem_t;
 typedef unsigned long long Canary_t;
 #include "../myStack/stack.h"
 #include "CPU.h"
@@ -13,54 +13,46 @@ int checkHeader(Header header)
     return noErrors;
 }
 
-int* checkArg(CPU* cpu)
+num_t* checkArg(CPU* cpu)
 {
-    if (cpu->code[cpu->ip] == POP_CMD)
+    if ((cpu->code[cpu->ip] & CMDMASK) == POP_CMD)
     {
-        printf("here1\n");
-        fprintf(stderr, "%02X\n", cpu->code[cpu->ip]);
         if (cpu->code[cpu->ip] & ARG_MEM) 
         {
-            fprintf(stderr, "%02X\n", cpu->code[cpu->ip]);
             char cmd = cpu->code[cpu->ip++];
-            fprintf(stderr, "%02X\n", cpu->code[cpu->ip]);
-            int arg = 0;
+            num_t arg = 0;
 
             if (cmd & ARG_REG) arg += cpu->Regs[cpu->code[cpu->ip++]];
             if (cmd & ARG_IMMED) 
             {
-                arg += *(int*)(cpu->code + cpu->ip);
-                cpu->ip += sizeof(int);
+                arg += *(num_t*)(cpu->code + cpu->ip);
+                cpu->ip += sizeof(num_t);
             }
-            fprintf(stderr, "%02X\n", cpu->code[cpu->ip]);
 
-            return cpu->RAM + arg;
+            return cpu->RAM + (int) arg;
         }
         else
         {
             char cmd = cpu->code[cpu->ip++];
-            int* arg = 0;
-            if (cmd & ARG_REG) arg = cpu->Regs + cpu->code[cpu->ip++];
+            num_t* arg = 0;
+            if (cmd & ARG_REG) arg = cpu->Regs + (int) cpu->code[cpu->ip++];
 
             return arg;
         }
     }
     else
     {
-        printf("here\n");
         char cmd = cpu->code[cpu->ip++];
 //        fprintf(stderr, "%02x\n", cmd);
-        static int arg = 0;
+        static num_t arg = 0;
         arg = 0;
         if (cmd & ARG_REG) arg += cpu->Regs[cpu->code[cpu->ip++]];
         if (cmd & ARG_IMMED) 
         {
-            arg += *(int*)(cpu->code + cpu->ip);
-            cpu->ip += sizeof(int);
+            arg += *(num_t*)(cpu->code + cpu->ip);
+            cpu->ip += sizeof(num_t);
         }
-        fprintf(stderr, "1 %d\n", arg);
-        if (cmd & ARG_MEM) arg = cpu->RAM[arg];
-        fprintf(stderr, "2 %d\n", arg);
+        if (cmd & ARG_MEM) arg = cpu->RAM[(int) arg];
 
         return &arg;
     }
@@ -71,7 +63,7 @@ int execute (CPU* cpu, Header header)
     Stack_t stk = {};
     stackCtor(&stk, 10);
     cpu->ip = 0;
-    int *arg = nullptr;
+    num_t *arg = nullptr;
 
     while (cpu->ip < header.codeSize)
     {

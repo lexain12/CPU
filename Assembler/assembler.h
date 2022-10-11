@@ -36,6 +36,6 @@ int readFileToLinesStruct(FILE* openedFile, InputFile* inputFile);
 
 int textToCode(InputFile *inputFile, char *code, Header* header);
 
-char checkArg(char* arg, char* Register, int *num);
+char checkArg(char* arg, char* Register, num_t *num);
 
 void setArg(char* arg, char* code, size_t* ip, int command);

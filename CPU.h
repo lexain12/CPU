@@ -12,4 +12,4 @@ int checkHeader(Header header);
 
 int execute (CPU* cpu, Header header);
 
-int* checkArg(CPU* cpu);
+num_t* checkArg(CPU* cpu);

@@ -115,7 +115,7 @@ int readFileToLinesStruct(FILE* openedFile, InputFile* inputFile)
     return err;
 }
 
-char checkArg(char* arg, char* Register, int *num)
+char checkArg(char* arg, char* Register, num_t *num)
 {
     char cmd = 0;
     char* firstChr = strchr(arg, 'r');
@@ -125,9 +125,9 @@ char checkArg(char* arg, char* Register, int *num)
     {
         cmd |= ARG_REG;
         *Register = *(firstChr + 1) - 'a' + 1;
-        if (sscanf(arg, "%*[^+]+%d", num) > 0) 
+        if (sscanf(arg, "%*[^+]+"Format_, num) > 0) 
         {}
-        else if (sscanf(arg, "%d", num) > 0)
+        else if (sscanf(arg, Format_, num) > 0)
         {}
         else
             return cmd;
@@ -135,12 +135,12 @@ char checkArg(char* arg, char* Register, int *num)
         
         return cmd;
     }
-    else if (sscanf(arg, ":%d", num) > 0)
+    else if (sscanf(arg, ":"Format_, num) > 0)
     {
         cmd |= ARG_IMMED;
         return cmd;
     }
-    else if (sscanf(arg, "%d", num))
+    else if (sscanf(arg, Format_, num))
     {
         cmd |= ARG_IMMED;
         return cmd;
@@ -150,9 +150,9 @@ char checkArg(char* arg, char* Register, int *num)
 
 void setArg(char* arg, char* code, size_t* ip, int command)
 {
-    char flags    = 0;
-    int  num      = 0;
-    char Register = 0;
+    char  flags    = 0;
+    num_t num      = 0;
+    char  Register = 0;
 
     if (arg[0] == '[' && (arg[strlen(arg) - 1]) == ']')
     {
@@ -166,14 +166,14 @@ void setArg(char* arg, char* code, size_t* ip, int command)
     if (flags & ARG_REG) code[(*ip)++] = Register;
     if (strchr(arg, ':'))
     {
-        *(int*)(code + *ip) = Labels[num];
-        (*ip) += sizeof(int);
+        *(num_t*)(code + *ip) = Labels[(int) num];
+        (*ip) += sizeof(num_t);
         return;
     }
     if (flags & ARG_IMMED)
     {
-        *(int*)(code + *ip) = num;
-        (*ip) += sizeof(int);
+        *(num_t*)(code + *ip) = num;
+        (*ip) += sizeof(num_t);
     }
 }
 
@@ -183,7 +183,7 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
     Line *_arrayOfLines = inputFile->arrayOfLines;
     char curCmd[MAX_STR_SIZE] = "";
     char curArg[MAX_STR_SIZE] = "";
-    int    num      = 0;
+    num_t  num      = 0;
     size_t line     = 0;
     size_t ip       = 0;
 

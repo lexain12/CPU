@@ -26,7 +26,7 @@ int main()
     readFileToLinesStruct(fileptr, &inputFile);
     fclose (fileptr);
     
-    code = (char*) calloc(inputFile.numberOfLines * 2, sizeof(int));
+    code = (char*) calloc(inputFile.numberOfLines * 2, sizeof(num_t));
 
     textToCode(&inputFile, code, &header); // make error
     textToCode(&inputFile, code, &header); // make error
@@ -40,6 +40,7 @@ int main()
     {
         printf("%02X ", code[index]);
     }
+    printf("\n");
     
 }
 
