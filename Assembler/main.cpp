@@ -10,7 +10,7 @@
 
 int main() 
 {
-    FILE* fileptr = fopen("Assembler/cmd.txt", "r");
+    FILE* fileptr = fopen("Assembler/quadraticEquation.txt", "r");
     assert(fileptr != nullptr);
 
     InputFile inputFile = {};
@@ -28,8 +28,7 @@ int main()
     
     code = (char*) calloc(inputFile.numberOfLines * 2, sizeof(num_t));
 
-    textToCode(&inputFile, code, &header); // make error
-    textToCode(&inputFile, code, &header); // make error
+    assembly(&inputFile, code, &header);
 
     FILE* fileToWrite = fopen("Assembler/out.bin", "wb");
     assert(fileToWrite != nullptr);
@@ -41,6 +40,6 @@ int main()
         printf("%02X ", code[index]);
     }
     printf("\n");
-    
+//fclose
 }
 

@@ -7,6 +7,7 @@
 #include <string.h>
 #include "../common.h"
 #include "assembler.h"
+#include "LogLib.h"
 
 static int Labels[12] = {};
 
@@ -117,7 +118,7 @@ int readFileToLinesStruct(FILE* openedFile, InputFile* inputFile)
 
 char checkArg(char* arg, char* Register, num_t *num)
 {
-    char cmd = 0;
+    char       cmd = 0;
     char* firstChr = strchr(arg, 'r');
     char* lastChr  = strchr(arg, 'x');
 
@@ -196,14 +197,14 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
             sscanf(curCmd, "%d", &label);
             Labels[label] = ip;
         }
-#define DEF_CMD(name, num, arg, cod)                                      \ 
+#define DEF_CMD(name, num, arg, cod)                                       \
         else if (strcasecmp(curCmd, #name) == 0)                            \
         {                                                                   \
-            if (arg)                                                        \        
+            if (arg)                                                        \
             {                                                               \
                 sscanf (_arrayOfLines[line].charArray, "%*s %s", curArg);   \
                 setArg (curArg, code, &ip, num);                            \
-            }                                                               \        
+            }                                                               \
             else                                                            \
             {                                                               \
                 code[ip++] = (char) name##_CMD;                             \
@@ -223,7 +224,6 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
         }
         line++;
         
-   
     }
     if (code[--ip] != HLT_CMD)
     {
@@ -232,4 +232,10 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
     }
 
     return noErrors;
+}
+
+void assembly(InputFile *inputFile, char* code, Header *header)
+{
+    textToCode(inputFile, code, header); 
+    textToCode(inputFile, code, header);
 }

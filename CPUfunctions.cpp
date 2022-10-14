@@ -2,6 +2,7 @@ typedef double Elem_t;
 typedef unsigned long long Canary_t;
 #include "../myStack/stack.h"
 #include "CPU.h"
+#include <math.h>
 
 int checkHeader(Header header)
 {
@@ -19,13 +20,13 @@ num_t* checkArg(CPU* cpu)
     {
         if (cpu->code[cpu->ip] & ARG_MEM) 
         {
-            char cmd = cpu->code[cpu->ip++];
+            char cmd  = cpu->code[cpu->ip++];
             num_t arg = 0;
 
             if (cmd & ARG_REG) arg += cpu->Regs[cpu->code[cpu->ip++]];
             if (cmd & ARG_IMMED) 
             {
-                arg += *(num_t*)(cpu->code + cpu->ip);
+                arg     += *(num_t*)(cpu->code + cpu->ip);
                 cpu->ip += sizeof(num_t);
             }
 
@@ -43,7 +44,6 @@ num_t* checkArg(CPU* cpu)
     else
     {
         char cmd = cpu->code[cpu->ip++];
-//        fprintf(stderr, "%02x\n", cmd);
         static num_t arg = 0;
         arg = 0;
         if (cmd & ARG_REG) arg += cpu->Regs[cpu->code[cpu->ip++]];
@@ -70,8 +70,8 @@ int execute (CPU* cpu, Header header)
         stackDump(&stk, 0);
         switch (cpu->code[cpu->ip] & CMDMASK)
         {
-#define DEF_CMD(name, num, arg, ...)\
-            case name##_CMD:        \
+#define DEF_CMD(name, num, arg, ...) \
+            case name##_CMD:         \
                 __VA_ARGS__         
 #include "cmd.h"
 #undef DEF_CMD
