@@ -25,6 +25,12 @@ struct InputFile
     char*  text          = nullptr;
 };
 
+struct CMDline 
+{
+    char line[33] = "";
+    size_t curChar = 0;
+};
+
 size_t fileSize (FILE* file);
 
 int readFile(FILE* openedFile, char** dest);

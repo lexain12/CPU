@@ -64,8 +64,6 @@ int readFile(FILE* openedFile, char** dest)
 
     size_t numberOfChars = fileSize(openedFile);
 
-//    printf("filesize = %lu\n", numberOfChars);
-
     *dest = (char*) calloc(numberOfChars + 1, sizeof(char));
 
     size_t charsReaded = fread((void*) *dest, sizeof(char), numberOfChars, openedFile); // 
@@ -91,7 +89,6 @@ int textToStr(char* text, size_t* numberOfLines)
     }
     
     text[i] = '\n';
-//    fprintf(stderr, "number of lines = %lu\n", *numberOfLines);
 
     return noErrors;
 }
@@ -110,10 +107,7 @@ int splitIntoLines(InputFile *inputFile)
     
     size_t line = 0;
 
-//    fprintf(stderr, "%s", ((inputFile->arrayOfLines)[line]).charArray);
-//    fprintf(stderr, "%s\n", ((arrayOfLines)[line]).charArray);
     arrayOfLines[line].charArray = text;
-//    fprintf(stderr, "%s", ((inputFile->arrayOfLines)[line]).charArray);
 
     line++;
 
@@ -122,22 +116,15 @@ int splitIntoLines(InputFile *inputFile)
     {
         if (text[i] == '\0')
         {
-//           fprintf(stderr, "line number is %lu\n", line);
-           
            arrayOfLines[line - 1].length    = (size_t) (&text[i] - arrayOfLines[line - 1].charArray);
            arrayOfLines[line]    .charArray = &text[i + 1];
-           
-        // fprintf(stderr, "%s\n", ((arrayOfLines)[line]).charArray);           
- //          fprintf(stderr, "length = %lu\n", arrayOfLines[line - 1].length);
-           
+
            line++;
         }
     }
 
     arrayOfLines[line - 1].length = (size_t) (&text[i] - arrayOfLines[line - 1].charArray);
    
-//    fprintf(stderr, "line number is %lu\n", line);
-    
     return noErrors;
 }
 
@@ -199,27 +186,20 @@ void setArg(char* arg, char* code, size_t* ip, int command)
 
     flags |= checkArg(arg, &Register, &num);
 
-    fprintf(LISTFILEPTR, "%02X", ((char) command) | flags);
     code[(*ip)++] = ((char) command) | flags;
     if (flags & ARG_REG) 
     {
-        fprintf(LISTFILEPTR, " %02X ", (char) Register);
         code[(*ip)++] = Register;
     }
     if (strchr(arg, ':'))
     {
         num_t tnum = (double) Labels[(int) num];
         numCpy(&tnum, (code + *ip));
-        fprintf(LISTFILEPTR, " ");
-        listPrint(&num, sizeof(num_t));
         (*ip) += sizeof(num_t);
         return;
     }
     if (flags & ARG_IMMED)
     {
-        printf("NUM %lg\n", num);
-        fprintf(LISTFILEPTR, " ");
-        listPrint(&num, sizeof(num_t));
         numCpy(&num, (code + *ip));
         (*ip) += sizeof(num_t);
     }
@@ -261,9 +241,9 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
             if (arg)                                                         \
             {                                                                \
                 sscanf (_arrayOfLines[line].charArray, "%*s %s", curArg);    \
-                fprintf(LISTFILEPTR, "%-04X ", ip);                          \
+                listPrint(&ip, 4);                               \
+                fprintf(LISTFILEPTR, "%-6s %-6s\n", curCmd, curArg);              \
                 setArg (curArg, code, &ip, num);                             \
-                fprintf(LISTFILEPTR, #name " %s\n", curArg);                  \
             }                                                                \
             else                                                             \
             {                                                                \

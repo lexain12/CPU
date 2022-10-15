@@ -35,8 +35,8 @@ num_t* checkArg(CPU* cpu)
                 arg     += *(num_t*)(cpu->code + cpu->ip);
                 cpu->ip += sizeof(num_t);
             }
-
-            return cpu->RAM + (int) arg;
+            
+            return (cpu->RAM + (int) arg);
         }
         else
         {
@@ -94,19 +94,19 @@ int execute (CPU* cpu, Header header)
 {
     Stack_t stk = {};
     stackCtor(&stk, 12);
-    stackCtor(&(cpu->LabStk), 10);
+    stackCtor(&cpu->LabStk, 10);
     cpu->ip = 0;
     num_t *arg = nullptr;
 
     while (cpu->ip < header.codeSize)
     {
-        fprintf(stderr, "iP %02x\n", cpu->ip);
         cpuDump(cpu, &stk);
         switch (cpu->code[cpu->ip] & CMDMASK)
         {
 #define DEF_CMD(name, num, arg, ...) \
             case name##_CMD:         \
-                __VA_ARGS__         
+                __VA_ARGS__          \
+                break;
 #include "cmd.h"
 #undef DEF_CMD
             case  HLT_CMD: 
