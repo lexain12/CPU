@@ -1,4 +1,5 @@
 #include <cassert>
+#include "stack.h"
 #include "common.h"
 
 enum CpuErrors
@@ -8,8 +9,13 @@ enum CpuErrors
     executionError = 3,
 };
 
-int checkHeader(Header header);
+struct CPU 
+{
+    char* code;
+    size_t ip;
+    num_t Regs[5] = {};
+    num_t RAM[225] = {};
+    Stack_t LabStk;
+};
 
-int execute (CPU* cpu, Header header);
-
-num_t* checkArg(CPU* cpu);
+void numCpy(char* out, char* in);

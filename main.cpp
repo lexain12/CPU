@@ -1,5 +1,11 @@
 #include <stdio.h>
+#include "common.h"
+#include <cassert>
 #include "CPU.h"
+
+int checkHeader(Header header);
+int execute (CPU* cpu, Header header);
+num_t* checkArg(CPU* cpu);
 
 int main() 
 {

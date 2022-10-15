@@ -1,4 +1,6 @@
+#pragma once
 const int MAX_STR_SIZE = 20;
+
 
 enum Errors 
 {
@@ -22,7 +24,6 @@ struct InputFile
     Line*  arrayOfLines  = nullptr;
     char*  text          = nullptr;
 };
-
 
 size_t fileSize (FILE* file);
 

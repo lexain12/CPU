@@ -4,9 +4,10 @@ IN
 POP rbx 
 IN
 POP rcx
+CALL :9
 PUSH 0
 PUSH rax 
-JE :1
+JE :7
 PUSH rbx
 PUSH rbx 
 MUL
@@ -39,26 +40,24 @@ DIV
 DIV
 OUT
 HLT
-1:
+7:
+PUSH rbx
 PUSH 0
-PUSH rcx
 JE :2
-PUSH 0
-PUSH rbx
-JE 4: 
-PUSH 0
-PUSH rbx
-PUSH rcx
 PUSH -1
+PUSH rcx
 MUL
-PUSH rbx
+PUSH rbx 
 DIV
 OUT
 HLT
 2:
-PUSH rbx 
+PUSH rcx
 PUSH 0
-JE 3:
+JE :3
+PUSH -1
+SQRT
+OUT
 HLT
 3:
 PUSH 1
@@ -66,5 +65,7 @@ PUSH 0
 DIV
 OUT
 HLT
-4:
-HLT
+9:
+PUSH 10000
+OUT 
+RET

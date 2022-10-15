@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <ctime>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <cstdlib>
@@ -9,7 +10,42 @@
 #include "assembler.h"
 #include "LogLib.h"
 
-static int Labels[12] = {};
+#ifndef LISTNAME
+#define LISTNAME "listing.txt"
+#endif
+
+int Labels[12] = {};
+
+FILE* const listOpen(const char* listingFileName)
+{
+    char buf[0] = {};
+    FILE* filePtr = fopen(listingFileName, "w");
+    setvbuf(filePtr, buf, _IONBF, 0);
+
+    const time_t timer = time(NULL);
+    fprintf(filePtr, "---------------%s", strtok(ctime(&timer), "\n"));
+    fseek(filePtr, -1, SEEK_CUR);
+    fprintf(filePtr, "---------------\n");
+
+    return filePtr;
+}
+
+FILE* const listOpen(const char*);
+
+FILE* const LISTFILEPTR = listOpen(LISTNAME);
+
+void listPrint(void* src, size_t num)
+{
+    for (size_t index = 0; index < num; ++index)
+    {
+        fprintf(LISTFILEPTR, "%02X ", ((char*)src)[index]);
+    }
+}
+
+void numCpy(void* src, void* dest)
+{
+    memcpy(dest, src, sizeof(num_t));
+}
 
 size_t fileSize (FILE* file)
 {
@@ -126,7 +162,7 @@ char checkArg(char* arg, char* Register, num_t *num)
     {
         cmd |= ARG_REG;
         *Register = *(firstChr + 1) - 'a' + 1;
-        if (sscanf(arg, "%*[^+]+"Format_, num) > 0) 
+        if (sscanf(arg, "%*[^+]+" Format_, num) > 0) 
         {}
         else if (sscanf(arg, Format_, num) > 0)
         {}
@@ -136,7 +172,7 @@ char checkArg(char* arg, char* Register, num_t *num)
         
         return cmd;
     }
-    else if (sscanf(arg, ":"Format_, num) > 0)
+    else if (sscanf(arg, ":" Format_, num) > 0)
     {
         cmd |= ARG_IMMED;
         return cmd;
@@ -163,17 +199,28 @@ void setArg(char* arg, char* code, size_t* ip, int command)
 
     flags |= checkArg(arg, &Register, &num);
 
+    fprintf(LISTFILEPTR, "%02X", ((char) command) | flags);
     code[(*ip)++] = ((char) command) | flags;
-    if (flags & ARG_REG) code[(*ip)++] = Register;
+    if (flags & ARG_REG) 
+    {
+        fprintf(LISTFILEPTR, " %02X ", (char) Register);
+        code[(*ip)++] = Register;
+    }
     if (strchr(arg, ':'))
     {
-        *(num_t*)(code + *ip) = Labels[(int) num];
+        num_t tnum = (double) Labels[(int) num];
+        numCpy(&tnum, (code + *ip));
+        fprintf(LISTFILEPTR, " ");
+        listPrint(&num, sizeof(num_t));
         (*ip) += sizeof(num_t);
         return;
     }
     if (flags & ARG_IMMED)
     {
-        *(num_t*)(code + *ip) = num;
+        printf("NUM %lg\n", num);
+        fprintf(LISTFILEPTR, " ");
+        listPrint(&num, sizeof(num_t));
+        numCpy(&num, (code + *ip));
         (*ip) += sizeof(num_t);
     }
 }
@@ -187,7 +234,8 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
     num_t  num      = 0;
     size_t line     = 0;
     size_t ip       = 0;
-
+    
+    fprintf(LISTFILEPTR, "-----------------------------\n");
     while (line < inputFile->numberOfLines)
     {
         sscanf(_arrayOfLines[line].charArray, "%s", curCmd);
@@ -197,18 +245,30 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
             sscanf(curCmd, "%d", &label);
             Labels[label] = ip;
         }
-#define DEF_CMD(name, num, arg, cod)                                       \
-        else if (strcasecmp(curCmd, #name) == 0)                            \
-        {                                                                   \
-            if (arg)                                                        \
-            {                                                               \
-                sscanf (_arrayOfLines[line].charArray, "%*s %s", curArg);   \
-                setArg (curArg, code, &ip, num);                            \
-            }                                                               \
-            else                                                            \
-            {                                                               \
-                code[ip++] = (char) name##_CMD;                             \
-            }                                                               \
+        else if (strchr(curCmd, '/'))
+        {
+            line++;
+            continue;
+        }
+        else if (_arrayOfLines[line].charArray[0] == '\0' || _arrayOfLines[line].charArray[0] == '\n')
+        {
+            line++;
+            continue;
+        }
+#define DEF_CMD(name, num, arg, cod)                                         \
+        else if (strcasecmp(curCmd, #name) == 0)                             \
+        {                                                                    \
+            if (arg)                                                         \
+            {                                                                \
+                sscanf (_arrayOfLines[line].charArray, "%*s %s", curArg);    \
+                fprintf(LISTFILEPTR, "%-04X ", ip);                          \
+                setArg (curArg, code, &ip, num);                             \
+                fprintf(LISTFILEPTR, #name " %s\n", curArg);                  \
+            }                                                                \
+            else                                                             \
+            {                                                                \
+                code[ip++] = (char) name##_CMD;                              \
+            }                                                                \
         }
 #include "../cmd.h"
 #undef DEF_CMD
@@ -216,7 +276,6 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
         {
             code[ip++] = (char) HLT_CMD;
             header->codeSize = ip;
-            break;
         }
         else 
         {
@@ -225,6 +284,7 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
         line++;
         
     }
+    header->codeSize = ip;
     if (code[--ip] != HLT_CMD)
     {
         printf("No hlt\n");
@@ -237,5 +297,9 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
 void assembly(InputFile *inputFile, char* code, Header *header)
 {
     textToCode(inputFile, code, header); 
+    for (int i = 0; i < 12; i++)
+    {
+        printf("%d\n", Labels[i]);
+    }
     textToCode(inputFile, code, header);
 }

@@ -10,7 +10,7 @@
 
 int main() 
 {
-    FILE* fileptr = fopen("Assembler/quadraticEquation.txt", "r");
+    FILE* fileptr = fopen("Assembler/circle.txt", "r");
     assert(fileptr != nullptr);
 
     InputFile inputFile = {};
@@ -40,6 +40,8 @@ int main()
         printf("%02X ", code[index]);
     }
     printf("\n");
-//fclose
+    fclose(fileptr);
+
+    return 0;
 }
 
