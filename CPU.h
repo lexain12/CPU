@@ -18,4 +18,7 @@ struct CPU
     Stack_t LabStk;
 };
 
-void numCpy(char* out, char* in);
+void numCpy(char*, char*);
+int checkHeader(Header header);
+int execute (CPU* cpu, Header header);
+num_t* checkArg(CPU* cpu);

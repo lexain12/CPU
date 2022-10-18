@@ -12,7 +12,9 @@
 #include <stdlib.h>
 #include "LogLib.h"
 
-FILE* const logOpen(const char* logFileName)
+FILE* logOpen(const char* logFileName);
+
+FILE* logOpen(const char* logFileName)
 {
     char buf[0] = {};
     FILE* filePtr = fopen(logFileName, "a");
@@ -26,28 +28,33 @@ FILE* const logOpen(const char* logFileName)
     return filePtr;
 }
 
-FILE* const logOpen(const char*);
+FILE* logOpen(const char*);
 
-FILE* const LOGFILEPTR = logOpen(LOGNAME);
+FILE* LOGFILEPTR = logOpen(LOGNAME);
 
 tm Tm = {};
 
-int logprint(char param)
+void logprint(char param);
+void logprint(int param);
+void logprint(char* param);
+void logprint(double param);
+
+void logprint(char param)
 {
     fprintf(LOGFILEPTR, "%c", param);
 }
 
-int logprint(int param)
+void logprint(int param)
 {
     fprintf(LOGFILEPTR, "%d", param);
 }
 
-int logprint(char* param)
+void logprint(char* param)
 {
     fprintf(LOGFILEPTR, "%s", param);
 }
 
-int logprint(double param)
+void logprint(double param)
 {
     fprintf(LOGFILEPTR, "%lg", param);
 }

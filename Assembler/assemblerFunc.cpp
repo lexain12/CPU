@@ -16,6 +16,7 @@
 
 int Labels[12] = {};
 
+FILE* const listOpen(const char*);
 FILE* const listOpen(const char* listingFileName)
 {
     char buf[0] = {};
@@ -30,15 +31,17 @@ FILE* const listOpen(const char* listingFileName)
     return filePtr;
 }
 
-FILE* const listOpen(const char*);
-
 FILE* const LISTFILEPTR = listOpen(LISTNAME);
 
 void listPrint(void* src, size_t num)
 {
     for (size_t index = 0; index < num; ++index)
     {
-        fprintf(LISTFILEPTR, "%02X ", ((char*)src)[index]);
+        char curByte = ((char*)src)[index];
+        if (curByte > 0)
+            fprintf(LISTFILEPTR, "%02X ", (unsigned int)curByte);
+        else 
+            fprintf(LISTFILEPTR, "%02X ", (unsigned int) (-1 * curByte));
     }
 }
 
@@ -149,27 +152,34 @@ char checkArg(char* arg, char* Register, num_t *num)
     {
         cmd |= ARG_REG;
         *Register = *(firstChr + 1) - 'a' + 1;
+    
         if (sscanf(arg, "%*[^+]+" Format_, num) > 0) 
         {}
+        
         else if (sscanf(arg, Format_, num) > 0)
         {}
+        
         else
             return cmd;
+        
         cmd |= ARG_IMMED;
         
         return cmd;
     }
+    
     else if (sscanf(arg, ":" Format_, num) > 0)
     {
         cmd |= ARG_IMMED;
         return cmd;
     }
+    
     else if (sscanf(arg, Format_, num))
     {
         cmd |= ARG_IMMED;
         return cmd;
     }
-    //else
+    
+    return cmd;
 }
 
 void setArg(char* arg, char* code, size_t* ip, int command)
@@ -181,27 +191,38 @@ void setArg(char* arg, char* code, size_t* ip, int command)
     if (arg[0] == '[' && (arg[strlen(arg) - 1]) == ']')
     {
         arg += 1;
-        flags |= ARG_MEM;
+        flags |= (char)ARG_MEM;
     }
 
     flags |= checkArg(arg, &Register, &num);
 
-    code[(*ip)++] = ((char) command) | flags;
+    char cmd      = (char) command | flags;
+    code[(*ip)++] = cmd;
+    listPrint(&cmd, sizeof(char));
+
     if (flags & ARG_REG) 
     {
         code[(*ip)++] = Register;
+        listPrint(&Register, sizeof(char));
     }
+    
     if (strchr(arg, ':'))
     {
         num_t tnum = (double) Labels[(int) num];
         numCpy(&tnum, (code + *ip));
         (*ip) += sizeof(num_t);
+
+        listPrint(&tnum, sizeof(num_t));
+
         return;
     }
+    
     if (flags & ARG_IMMED)
     {
         numCpy(&num, (code + *ip));
         (*ip) += sizeof(num_t);
+
+        listPrint(&num, sizeof(num_t));
     }
 }
 
@@ -211,7 +232,6 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
     Line *_arrayOfLines = inputFile->arrayOfLines;
     char curCmd[MAX_STR_SIZE] = "";
     char curArg[MAX_STR_SIZE] = "";
-    num_t  num      = 0;
     size_t line     = 0;
     size_t ip       = 0;
     
@@ -219,36 +239,43 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
     while (line < inputFile->numberOfLines)
     {
         sscanf(_arrayOfLines[line].charArray, "%s", curCmd);
+  
         if  (strchr(curCmd, ':'))
         {
             int label = 0;
             sscanf(curCmd, "%d", &label);
-            Labels[label] = ip;
+            Labels[label] = (int) ip;
         }
+        
         else if (strchr(curCmd, '/'))
         {
             line++;
             continue;
         }
+        
         else if (_arrayOfLines[line].charArray[0] == '\0' || _arrayOfLines[line].charArray[0] == '\n')
         {
             line++;
             continue;
         }
-#define DEF_CMD(name, num, arg, cod)                                         \
-        else if (strcasecmp(curCmd, #name) == 0)                             \
-        {                                                                    \
-            if (arg)                                                         \
-            {                                                                \
-                sscanf (_arrayOfLines[line].charArray, "%*s %s", curArg);    \
-                listPrint(&ip, 4);                               \
-                fprintf(LISTFILEPTR, "%-6s %-6s\n", curCmd, curArg);              \
-                setArg (curArg, code, &ip, num);                             \
-            }                                                                \
-            else                                                             \
-            {                                                                \
-                code[ip++] = (char) name##_CMD;                              \
-            }                                                                \
+
+#define DEF_CMD(name, num, arg, cod)                                                                             \
+        else if (strcasecmp(curCmd, #name) == 0)                                                                 \
+        {                                                                                                        \
+            if (arg)                                                                                             \
+            {                                                                                                    \
+                sscanf (_arrayOfLines[line].charArray, "%*s %s", curArg);                                        \
+                fprintf(LISTFILEPTR, "%-6X %-6s %-8s", (unsigned int) ip, curCmd, curArg);                       \
+                                                                                                                 \
+                setArg (curArg, code, &ip, num);                                                                 \
+                fprintf(LISTFILEPTR, "\n");                                                                      \
+            }                                                                                                    \
+            else                                                                                                 \
+            {                                                                                                    \
+                fprintf(LISTFILEPTR, "%-6X %-14s %02x\n", (unsigned int) ip, curCmd, (unsigned int) name##_CMD); \
+                                                                                                                 \
+                code[ip++] = (char) name##_CMD;                                                                  \
+            }                                                                                                    \
         }
 #include "../cmd.h"
 #undef DEF_CMD
@@ -258,13 +285,13 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
             header->codeSize = ip;
         }
         else 
-        {
             return syntaxError;
-        }
+
         line++;
-        
     }
+
     header->codeSize = ip;
+    
     if (code[--ip] != HLT_CMD)
     {
         printf("No hlt\n");
@@ -277,9 +304,5 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
 void assembly(InputFile *inputFile, char* code, Header *header)
 {
     textToCode(inputFile, code, header); 
-    for (int i = 0; i < 12; i++)
-    {
-        printf("%d\n", Labels[i]);
-    }
     textToCode(inputFile, code, header);
 }

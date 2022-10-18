@@ -3,10 +3,6 @@
 #include <cassert>
 #include "CPU.h"
 
-int checkHeader(Header header);
-int execute (CPU* cpu, Header header);
-num_t* checkArg(CPU* cpu);
-
 int main() 
 {
     CPU cpu = {};

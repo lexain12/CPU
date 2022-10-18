@@ -29,7 +29,7 @@ num_t* checkArg(CPU* cpu)
             char cmd  = cpu->code[cpu->ip++];
             num_t arg = 0;
 
-            if (cmd & ARG_REG) arg += cpu->Regs[cpu->code[cpu->ip++]];
+            if (cmd & ARG_REG) arg += cpu->Regs[(int) cpu->code[cpu->ip++]];
             if (cmd & ARG_IMMED) 
             {
                 arg     += *(num_t*)(cpu->code + cpu->ip);
@@ -52,7 +52,7 @@ num_t* checkArg(CPU* cpu)
         char cmd = cpu->code[cpu->ip++];
         static num_t arg = 0;
         arg = 0;
-        if (cmd & ARG_REG) arg += cpu->Regs[cpu->code[cpu->ip++]];
+        if (cmd & ARG_REG) arg += cpu->Regs[(int) cpu->code[cpu->ip++]];
         if (cmd & ARG_IMMED) 
         {
             num_t tnum = NAN;
@@ -74,7 +74,7 @@ void cpuDump(CPU* cpu, Stack_t *stk)
     fprintf(DBGFILEPTR, "-----------REGS-------\n");
     for (size_t index = 1; index < 5; ++index)
     {
-        fprintf(DBGFILEPTR, "r" "%c" "x: ", 'a' + index - 1);
+        fprintf(DBGFILEPTR, "r" "%c" "x: ", (char) ('a' + index - 1));
         fprintf(DBGFILEPTR, Format_ "\n", cpu->Regs[index]);
     }
     fprintf(DBGFILEPTR, "\n----------------------\n");

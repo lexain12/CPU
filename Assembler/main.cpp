@@ -8,9 +8,9 @@
 #include "../common.h"
 #include "assembler.h"
 
-int main() 
+int main(int argc, char* argv[]) 
 {
-    FILE* fileptr = fopen("Assembler/circle.txt", "r");
+    FILE* fileptr = fopen(argv[1], "r");
     assert(fileptr != nullptr);
 
     InputFile inputFile = {};
@@ -35,12 +35,6 @@ int main()
 
     fwrite (&header, sizeof(Header), sizeof(char), fileToWrite);
     fwrite (code, header.codeSize, sizeof(char), fileToWrite);
-    for (int index = 0; index < header.codeSize; index++)
-    {
-        printf("%02X ", code[index]);
-    }
-    printf("\n");
-    fclose(fileptr);
 
     return 0;
 }

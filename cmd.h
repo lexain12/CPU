@@ -68,12 +68,13 @@ DEF_CMD(RET, 19, 0,
 })
 DEF_CMD(VIEW, 20, 0,
 {
+    printf("\033[2J");
     for (size_t index = 0; index < 225; ++index)
     {
         if (cpu->RAM[index])
-            printf(" * ");
+            printf("* ");
         else
-            printf(" . ");
+            printf(". ");
         if (index % 15 == 14)
         {
             printf("\n");
@@ -117,11 +118,13 @@ DEF_JMP(JNE, !=, 15)
 DEF_CMD(DUMP, 16, 0,
 {
     for (size_t index = 0; index < header.codeSize; index++)
-    {
-        if (cpu->ip == index)
+    { if (cpu->ip == index)
             printf("[%02X] ", (unsigned int) cpu->code[index]);
         else
             printf("%02X ", (unsigned int) cpu->code[index]);
     }
     printf("\n");
 })
+
+#undef PUSH
+#undef POP

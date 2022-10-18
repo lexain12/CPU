@@ -48,3 +48,7 @@ char checkArg(char* arg, char* Register, num_t *num);
 void setArg(char* arg, char* code, size_t* ip, int command);
 
 void assembly(InputFile *inputFile, char *code, Header *header);
+
+void listPrint(void* src, size_t num);
+
+void numCpy(void* src, void* dest);
