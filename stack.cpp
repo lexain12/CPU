@@ -1,3 +1,4 @@
+#include <cassert>
 #include "stack.h"
 
 void numCpy(void *, void*);
@@ -284,7 +285,7 @@ void stackDumpFunc(Stack_t* stk, int errors, int line, const char* func, const c
     {
         if (stk->data[index] == getPoison(stk->data[index]))
         {
-            fprintf(dbgFile, "         [%lu] = POISONED\n", index);
+            //fprintf(dbgFile, "         [%lu] = POISONED\n", index);
         }
         else {
             fprintf(dbgFile, "        *[%lu] = ", index);
@@ -324,6 +325,7 @@ Elem_t stackPop(Stack_t* stk, int* errors)
     {
         stackDump(stk, errors_);
         if (errors) *errors = errors_;
+        assert (0);
     }
     else
     {

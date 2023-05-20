@@ -14,7 +14,7 @@ struct CPU
     char* code;
     size_t ip;
     num_t Regs[5] = {};
-    num_t RAM[225] = {};
+    num_t RAM[2000] = {};
     Stack_t LabStk;
 };
 

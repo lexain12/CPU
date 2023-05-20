@@ -3,63 +3,54 @@ DEF_CMD(ADD, 2, 0,
     printf("%u ", cpu->ip);
     printf("ADD\n");
     cpu->ip++;
-    break;
 })
 DEF_CMD(SUB, 3, 0,
 {
     printf("%u ", cpu->ip);
     printf("SUB\n");
     cpu->ip++;
-    break;
 })
 DEF_CMD(MUL, 4, 0,
 {
     printf("%u ", cpu->ip);
     printf("MUL\n");
     cpu->ip++;
-    break;
 })
 DEF_CMD(DIV, 5, 0,
 {
     printf("%u ", cpu->ip);
     printf("DIV\n");
     cpu->ip++;
-    break;
 })
 DEF_CMD(OUT, 6, 0,
 {
     printf("%u ", cpu->ip);
     printf("OUT\n");
     cpu->ip++;
-    break;
 })
 DEF_CMD(IN, 7, 0,
 {
     printf("%u ", cpu->ip);
     printf("IN\n");
     cpu->ip++;
-    break;
 })
 DEF_CMD(POP, 8, 1,
 {
     printf("%u ", cpu->ip);
     printf("POP ");
     checkArg(cpu);
-    break;
 })
 DEF_CMD(PUSH, 1, 1,
 {
     printf("%u ", cpu->ip);
     printf("PUSH ");
     checkArg(cpu);
-    break;
 })
 DEF_CMD(JMP, 9, 1,
 {
     printf("%u ", cpu->ip);
     printf("JMP ");
     checkArg(cpu);
-    break;
 })
 DEF_CMD(SQRT, 17, 0,
 {
@@ -77,7 +68,26 @@ DEF_CMD(RET, 19, 0,
 {
     printf("%u ", cpu->ip);
     printf("RET\n");
+    cpu->ip++;
 }
+DEF_CMD(VIEW, 20, 0,
+{
+    printf("%u ", cpu->ip);
+    printf("VIEW\n");
+    cpu->ip++;
+})
+DEF_CMD(IDIV, 21, 0,
+{
+    printf("%u ", cpu->ip);
+    printf("IDIV\n");
+    cpu->ip++;
+})
+DEF_CMD(MOD, 24, 0,
+{
+    printf("%u ", cpu->ip);
+    printf("MOD\n");
+    cpu->ip++;
+})
 #define DEF_JMP(name, num) \
 DEF_CMD(name, num, 1,            \
 {                                \

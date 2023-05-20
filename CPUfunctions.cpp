@@ -3,7 +3,11 @@
 #include <math.h>
 #include "common.h"
 #include <string.h>
+#include <unistd.h>
 
+int msleep(unsigned int tms) {
+  return usleep(tms * 1000);
+}
 
 void numCpy(void* src, void* dest)
 {
@@ -19,7 +23,6 @@ int checkHeader(Header header)
         return signatureError;
     return noErrors;
 }
-
 num_t* checkArg(CPU* cpu)
 {
     if ((cpu->code[cpu->ip] & CMDMASK) == POP_CMD)
@@ -29,10 +32,12 @@ num_t* checkArg(CPU* cpu)
             char cmd  = cpu->code[cpu->ip++];
             num_t arg = 0;
 
-            if (cmd & ARG_REG) arg += cpu->Regs[(int) cpu->code[cpu->ip++]];
+            if (cmd & ARG_REG) arg += cpu->Regs[cpu->code[cpu->ip++]];
             if (cmd & ARG_IMMED) 
             {
-                arg     += *(num_t*)(cpu->code + cpu->ip);
+                num_t add = 0;
+                numCpy (cpu->code + cpu->ip, &add);
+                arg     += add;
                 cpu->ip += sizeof(num_t);
             }
             
@@ -52,7 +57,7 @@ num_t* checkArg(CPU* cpu)
         char cmd = cpu->code[cpu->ip++];
         static num_t arg = 0;
         arg = 0;
-        if (cmd & ARG_REG) arg += cpu->Regs[(int) cpu->code[cpu->ip++]];
+        if (cmd & ARG_REG) arg += cpu->Regs[cpu->code[cpu->ip++]];
         if (cmd & ARG_IMMED) 
         {
             num_t tnum = NAN;
@@ -100,7 +105,6 @@ int execute (CPU* cpu, Header header)
 
     while (cpu->ip < header.codeSize)
     {
-        cpuDump(cpu, &stk);
         switch (cpu->code[cpu->ip] & CMDMASK)
         {
 #define DEF_CMD(name, num, arg, ...) \
@@ -120,3 +124,4 @@ int execute (CPU* cpu, Header header)
     }
     return executionError;
 }
+

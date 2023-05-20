@@ -4,7 +4,6 @@ IN
 POP rbx 
 IN
 POP rcx
-CALL :9
 PUSH 0
 PUSH rax 
 JE :7
@@ -65,7 +64,4 @@ PUSH 0
 DIV
 OUT
 HLT
-9:
-PUSH 10000
-OUT 
-RET
+

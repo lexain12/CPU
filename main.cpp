@@ -5,6 +5,7 @@
 
 int main() 
 {
+    setvbuf(stdout, NULL, _IONBF, 0);
     CPU cpu = {};
     
     FILE *fileToRead = fopen("Assembler/out.bin", "rb");

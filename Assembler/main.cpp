@@ -8,7 +8,7 @@
 #include "../common.h"
 #include "assembler.h"
 
-int main(int argc, char* argv[]) 
+int main(int argc, const char* argv[]) 
 {
     FILE* fileptr = fopen(argv[1], "r");
     assert(fileptr != nullptr);

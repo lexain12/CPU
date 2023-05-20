@@ -14,7 +14,7 @@
 #define LISTNAME "listing.txt"
 #endif
 
-int Labels[12] = {};
+Label Labels[NUMSOFLABELS] = {};
 
 FILE* const listOpen(const char*);
 FILE* const listOpen(const char* listingFileName)
@@ -152,28 +152,30 @@ char checkArg(char* arg, char* Register, num_t *num)
     {
         cmd |= ARG_REG;
         *Register = *(firstChr + 1) - 'a' + 1;
+        printf ("Register %d\n", *Register);
     
-        if (sscanf(arg, "%*[^+]+" Format_, num) > 0) 
+        if (sscanf(arg, "%*[^+]+" Format_, num) > 0)  // Skips register name in "register + offset" expr and get offset
         {}
         
-        else if (sscanf(arg, Format_, num) > 0)
+        else if (sscanf(arg, Format_, num) > 0)       // Scans offset immediately
         {}
         
         else
-            return cmd;
+            return cmd;                              // We got register only, without offset 
         
-        cmd |= ARG_IMMED;
+        cmd |= ARG_IMMED;                       // Immed const in a "reg + offset" expr
         
         return cmd;
     }
     
-    else if (sscanf(arg, ":" Format_, num) > 0)
+    else if (sscanf(arg, ":" Format_, num) > 0) // Label is an immed const
     {
+        printf ("BLYYYYYYYYYYYYYYYYYYYYYYYYYYYYYAAAAAAA" Format_ "\n", *num);
         cmd |= ARG_IMMED;
         return cmd;
     }
     
-    else if (sscanf(arg, Format_, num))
+    else if (sscanf(arg, Format_, num))         // Immed const as a number after PUSH/POP cmds 
     {
         cmd |= ARG_IMMED;
         return cmd;
@@ -182,17 +184,105 @@ char checkArg(char* arg, char* Register, num_t *num)
     return cmd;
 }
 
-void setArg(char* arg, char* code, size_t* ip, int command)
+/*
+int  type = 0;
+int  reg  = 0;
+char name[10] = "";
+int  imm  = 0;
+int  n    = 0;
+
+char* bracketStart = strchr (arg, '[');
+char* bracketEnd   = strchr (arg, ']');
+assert (!bracketStart || (bracketStart && bracketEnd));
+
+if (bracketStart) 
+    {
+    arg = bracketStart+1;
+    len = bracketEnd - bracketStart;
+
+    type |= MEM;
+    }
+
+if (strchr (arg, ':')
+    {
+    type = IMMED;
+    sscanf (arg, " %d:%n", &imm, &n) == 2 || Error ("Error in label: '%s'", arg);
+    }
+
+else if (snscanf (arg, len, " [ %d + %[^]\t ] ]%n", &imm, regName, &n) == 3)
+    {
+    type |= (IMMED | REG | MEM);
+    reg = RegNameToNum (regName);
+    }
+else if (snscanf (arg, len, " [ %d ]%n", &imm, &n) == 2)
+    {
+    type |= IMMED | MEM;
+    }
+else if (snscanf (arg, len, " [ %[^]\t ] ]%n", regName, &n) == 2)
+    {
+    type |= (REG | MEM);
+    reg = RegNameToNum (regName);
+    }
+*/
+
+void makeJmpArg(char* arg, char* code, size_t* ip, int command)
 {
     char  flags    = 0;
     num_t num      = 0;
     char  Register = 0;
 
+    printf("MAKEJMPARG %d, %lu\n", command, *ip);
+    for (size_t index = 0; Labels[index].name[0] != '\0'; ++index)
+    {
+        fprintf(stderr, "label name[%d]: %s\n", (int) index, Labels[index].name);
+        fprintf(stderr, "label ip[%d]: %d\n", (int) index, Labels[index].ip);
+    }
+
+    for (size_t index = 0; index < NUMSOFLABELS; ++index)
+    {
+
+        if (Labels[index].name[0] != '\0')
+        {
+
+            if (strcmp(Labels[index].name, arg) == 0)
+            {
+                char cmd      = (char) command | flags;
+                cmd |= ARG_IMMED;
+                code[(*ip)++] = cmd;
+                listPrint(&cmd, sizeof(char));
+
+                if (Labels[index].ip != -1)
+                {
+                    num_t tnum = (int) Labels[index].ip;
+                    numCpy(&tnum, (code + *ip));
+                    (*ip) += sizeof(num_t);
+                    listPrint(&tnum, sizeof(num_t));
+                }
+
+                return;
+            }
+
+        }
+
+    }
+    *ip += 1;                                                                                        
+    *ip += sizeof (num_t);                                                                           
+}
+
+void setArg(char* arg, char* code, size_t* ip, int command)
+{
+    char  flags    = 0;
+    num_t num      = 0;
+    char  Register = 0;
+    printf ("ARGUMENT (%s)\n", arg);
+
     if (arg[0] == '[' && (arg[strlen(arg) - 1]) == ']')
     {
         arg += 1;
         flags |= (char)ARG_MEM;
+        printf ("ARGMEM\n");
     }
+    
 
     flags |= checkArg(arg, &Register, &num);
 
@@ -202,19 +292,9 @@ void setArg(char* arg, char* code, size_t* ip, int command)
 
     if (flags & ARG_REG) 
     {
+        printf ("REG %02X\n", flags);
         code[(*ip)++] = Register;
         listPrint(&Register, sizeof(char));
-    }
-    
-    if (strchr(arg, ':'))
-    {
-        num_t tnum = (double) Labels[(int) num];
-        numCpy(&tnum, (code + *ip));
-        (*ip) += sizeof(num_t);
-
-        listPrint(&tnum, sizeof(num_t));
-
-        return;
     }
     
     if (flags & ARG_IMMED)
@@ -224,6 +304,7 @@ void setArg(char* arg, char* code, size_t* ip, int command)
 
         listPrint(&num, sizeof(num_t));
     }
+    
 }
 
 int textToCode(InputFile *inputFile, char *code, Header* header)
@@ -239,15 +320,9 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
     while (line < inputFile->numberOfLines)
     {
         sscanf(_arrayOfLines[line].charArray, "%s", curCmd);
+        printf ("CMD %s, ip %lu\n", curCmd, ip);
   
-        if  (strchr(curCmd, ':'))
-        {
-            int label = 0;
-            sscanf(curCmd, "%d", &label);
-            Labels[label] = (int) ip;
-        }
-        
-        else if (strchr(curCmd, '/'))
+        if (strchr(curCmd, '/'))
         {
             line++;
             continue;
@@ -262,7 +337,7 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
 #define DEF_CMD(name, num, arg, cod)                                                                             \
         else if (strcasecmp(curCmd, #name) == 0)                                                                 \
         {                                                                                                        \
-            if (arg)                                                                                             \
+            if (arg == 1)                                                                                        \
             {                                                                                                    \
                 sscanf (_arrayOfLines[line].charArray, "%*s %s", curArg);                                        \
                 fprintf(LISTFILEPTR, "%-6X %-6s %-8s", (unsigned int) ip, curCmd, curArg);                       \
@@ -270,6 +345,16 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
                 setArg (curArg, code, &ip, num);                                                                 \
                 fprintf(LISTFILEPTR, "\n");                                                                      \
             }                                                                                                    \
+                                                                                                                 \
+            else if (arg == 2)                                                                                   \
+            {                                                                                                    \
+                sscanf (_arrayOfLines[line].charArray, "%*s %s", curArg);                                        \
+                fprintf(LISTFILEPTR, "%-6X %-6s %-8s", (unsigned int) ip, curCmd, curArg);                       \
+                fprintf(stderr, "%s\n", curArg);                                                                 \
+                makeJmpArg(curArg, code, &ip, num);                                                              \
+                fprintf(LISTFILEPTR, "\n");                                                                      \
+            }                                                                                                    \
+                                                                                                                 \
             else                                                                                                 \
             {                                                                                                    \
                 fprintf(LISTFILEPTR, "%-6X %-14s %02x\n", (unsigned int) ip, curCmd, (unsigned int) name##_CMD); \
@@ -285,7 +370,26 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
             header->codeSize = ip;
         }
         else 
-            return syntaxError;
+        {
+            for (size_t index = 0; index < NUMSOFLABELS; ++index)
+            {
+                if (Labels[index].name[0] == '\0')
+                {
+                    Labels[index].ip = ip;
+                    strcpy(Labels[index].name, curCmd);
+                    break;
+                }
+                else if (strcmp(Labels[index].name, curCmd) == 0)
+                    break;
+            }
+            fprintf(stderr, "else\n");
+            fprintf(stderr, "%s\n", curCmd);
+            for (size_t index = 0; Labels[index].name[0] != '\0'; ++index)
+            {
+                fprintf(stderr, "label name[%d]: %s\n", (int) index, Labels[index].name);
+                fprintf(stderr, "label ip[%d]: %02X\n", (int) index, Labels[index].ip);
+            }
+        }
 
         line++;
     }
@@ -304,5 +408,10 @@ int textToCode(InputFile *inputFile, char *code, Header* header)
 void assembly(InputFile *inputFile, char* code, Header *header)
 {
     textToCode(inputFile, code, header); 
+    for (size_t index = 0; index < NUMSOFLABELS; ++index)
+    {
+        fprintf(stderr, "label name[%d]: %s\n", (int) index, Labels[index].name);
+        fprintf(stderr, "label ip[%d]: %d\n", (int) index, Labels[index].ip);
+    }
     textToCode(inputFile, code, header);
 }

@@ -1,5 +1,6 @@
 #pragma once
 const int MAX_STR_SIZE = 20;
+const size_t NUMSOFLABELS = 20;
 
 
 enum Errors 
@@ -31,6 +32,12 @@ struct CMDline
     size_t curChar = 0;
 };
 
+struct Label
+{
+    char name[MAX_STR_SIZE] = "";
+    size_t ip     = -1;
+};
+
 size_t fileSize (FILE* file);
 
 int readFile(FILE* openedFile, char** dest);
@@ -52,3 +59,6 @@ void assembly(InputFile *inputFile, char *code, Header *header);
 void listPrint(void* src, size_t num);
 
 void numCpy(void* src, void* dest);
+
+void makeJmpArg(char* arg, char* code, size_t* ip, int command);
+
